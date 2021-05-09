@@ -3,22 +3,34 @@ import cheerio from 'cheerio';
 import { DomIds } from './dom-ids';
 import { StockData } from './stock-data';
 import { logger } from '../logger';
+import {LookupData} from "./lookup-data";
 
 export class Scraper {
-  private static readonly BASE_URL = 'https://finance.yahoo.com/quote/';
+  private static readonly QUOTE_URL = 'https://finance.yahoo.com/quote/';
+  private static readonly LOOKUP_URL = 'https://finance.yahoo.com/lookup?s=';
+
 
   private static client = axios.create();
 
-  public static async fetch(stockSymbol: string) {
+  public static async fetch(stockSymbol?: string, companyName?: string) {
     logger.info('Scraper running!');
 
-    const html = await this.requestHTML(stockSymbol);
-    const stockData = this.parseHTML(html);
-    logger.info(stockData)
-    return stockData;
+    if (stockSymbol) {
+      const html = await this.requestQuoteHTML(stockSymbol);
+      const stockData = this.parseQuoteHTML(html);
+      logger.info(stockData)
+      return stockData;
+    }
+
+    if (companyName) {
+      const html = await this.requestLookupHTML(companyName);
+      const lookupData = this.parseLookupHTML(html);
+      logger.info(lookupData)
+      return lookupData;
+    }
   }
 
-  private static parseHTML(html: string): StockData {
+  private static parseQuoteHTML(html: string): StockData {
     const DOM = cheerio.load(html);
 
     const headerInfo = DOM(DomIds.HEADER_INFO_ID);
@@ -142,10 +154,47 @@ export class Scraper {
     return stockData;
   }
 
-  private static async requestHTML(stockSymbol: string): Promise<string> {
+  private static parseLookupHTML(html: string): LookupData {
+    const DOM = cheerio.load(html);
+
+    const getText = (dom: unknown, context: string) =>
+        DOM(dom).find(context).first().text();
+
+    const getElement = (dom: unknown, context: string) =>
+        DOM(dom).find(context);
+
+    const lookupPage = DOM(DomIds.LOOKUP_PAGE);
+
+    const bestMatch = getElement(lookupPage, `tbody tr`).first()
+    const symbol = getText(bestMatch, `td a`)
+    const name = getText(bestMatch, `td`);
+    const lastPrice = getText(bestMatch, `td`)[2];
+
+    const lookupData: LookupData = {
+      symbol,
+      name,
+      lastPrice
+    }
+
+    return lookupData
+  }
+
+
+  private static async requestQuoteHTML(stockSymbol: string): Promise<string> {
     try {
-      logger.info(`Scraping HTML for stock symbol '${stockSymbol}'...`);
-      const { data } = await this.client.get(`${this.BASE_URL}${stockSymbol}`);
+      logger.info(`Scraping HTML (quote data) for stock symbol '${stockSymbol}'...`);
+      const { data } = await this.client.get(`${this.QUOTE_URL}${stockSymbol}`);
+      return data;
+    } catch (e: unknown) {
+      logger.error(e);
+      throw new Error('Error making GET request!');
+    }
+  }
+
+  private static async requestLookupHTML(companyName: string): Promise<string> {
+    try {
+      logger.info(`Scraping HTML (lookup data) for company name '${companyName}'...`);
+      const { data } = await this.client.get(`${this.LOOKUP_URL}${companyName}`);
       return data;
     } catch (e: unknown) {
       logger.error(e);

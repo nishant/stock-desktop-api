@@ -26,4 +26,5 @@ var DomIds;
     DomIds["DIVIDEND_AND_YIELD_VALUE"] = "[data-test=\"DIVIDEND_AND_YIELD-value\"]";
     DomIds["EX_DIVEND_DATE_VALUE"] = "[data-test=\"EX_DIVIDEND_DATE-value\"]";
     DomIds["ONE_YEAR_TARGET_PRICE_VALUE"] = "[data-test=\"ONE_YEAR_TARGET_PRICE-value\"]";
+    DomIds["LOOKUP_PAGE"] = "[data-test=\"lookup-page\"]";
 })(DomIds = exports.DomIds || (exports.DomIds = {}));

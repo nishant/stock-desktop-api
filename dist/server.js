@@ -57,7 +57,7 @@ app.use(function (req, res, next) {
 });
 // Handle POST requests that come in formatted as JSON
 app.use(express_1.default.json());
-// default route
+// default route (symbol)
 app.get('/', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var stockSymbol, stockData;
     return __generator(this, function (_a) {
@@ -65,12 +65,30 @@ app.get('/', function (req, res) { return __awaiter(void 0, void 0, void 0, func
             case 0:
                 stockSymbol = req.query.stockSymbol;
                 if (!stockSymbol) return [3 /*break*/, 2];
-                return [4 /*yield*/, scraper_1.Scraper.fetch(stockSymbol.toString())];
+                return [4 /*yield*/, scraper_1.Scraper.fetch(stockSymbol.toString(), undefined)];
             case 1:
                 stockData = _a.sent();
                 _a.label = 2;
             case 2:
                 res.send(stockData);
+                return [2 /*return*/];
+        }
+    });
+}); });
+// lookup route
+app.get('/lookup', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var companyName, lookupData;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                companyName = req.query.companyName;
+                if (!companyName) return [3 /*break*/, 2];
+                return [4 /*yield*/, scraper_1.Scraper.fetch(undefined, companyName.toString())];
+            case 1:
+                lookupData = _a.sent();
+                _a.label = 2;
+            case 2:
+                res.send(lookupData);
                 return [2 /*return*/];
         }
     });

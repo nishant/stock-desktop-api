@@ -23,4 +23,5 @@ export enum DomIds {
   DIVIDEND_AND_YIELD_VALUE = '[data-test="DIVIDEND_AND_YIELD-value"]',
   EX_DIVEND_DATE_VALUE = '[data-test="EX_DIVIDEND_DATE-value"]',
   ONE_YEAR_TARGET_PRICE_VALUE = '[data-test="ONE_YEAR_TARGET_PRICE-value"]',
+  LOOKUP_PAGE = '[data-test="lookup-page"]',
 }

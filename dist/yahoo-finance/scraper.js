@@ -47,24 +47,34 @@ var logger_1 = require("../logger");
 var Scraper = /** @class */ (function () {
     function Scraper() {
     }
-    Scraper.fetch = function (stockSymbol) {
+    Scraper.fetch = function (stockSymbol, companyName) {
         return __awaiter(this, void 0, void 0, function () {
-            var html, stockData;
+            var html, stockData, html, lookupData;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         logger_1.logger.info('Scraper running!');
-                        return [4 /*yield*/, this.requestHTML(stockSymbol)];
+                        if (!stockSymbol) return [3 /*break*/, 2];
+                        return [4 /*yield*/, this.requestQuoteHTML(stockSymbol)];
                     case 1:
                         html = _a.sent();
-                        stockData = this.parseHTML(html);
+                        stockData = this.parseQuoteHTML(html);
                         logger_1.logger.info(stockData);
                         return [2 /*return*/, stockData];
+                    case 2:
+                        if (!companyName) return [3 /*break*/, 4];
+                        return [4 /*yield*/, this.requestLookupHTML(companyName)];
+                    case 3:
+                        html = _a.sent();
+                        lookupData = this.parseLookupHTML(html);
+                        logger_1.logger.info(lookupData);
+                        return [2 /*return*/, lookupData];
+                    case 4: return [2 /*return*/];
                 }
             });
         });
     };
-    Scraper.parseHTML = function (html) {
+    Scraper.parseQuoteHTML = function (html) {
         var _a, _b;
         var DOM = cheerio_1.default.load(html);
         var headerInfo = DOM(dom_ids_1.DomIds.HEADER_INFO_ID);
@@ -148,15 +158,35 @@ var Scraper = /** @class */ (function () {
         };
         return stockData;
     };
-    Scraper.requestHTML = function (stockSymbol) {
+    Scraper.parseLookupHTML = function (html) {
+        var DOM = cheerio_1.default.load(html);
+        var getText = function (dom, context) {
+            return DOM(dom).find(context).first().text();
+        };
+        var getElement = function (dom, context) {
+            return DOM(dom).find(context);
+        };
+        var lookupPage = DOM(dom_ids_1.DomIds.LOOKUP_PAGE);
+        var bestMatch = getElement(lookupPage, "tbody tr").first();
+        var symbol = getText(bestMatch, "td a");
+        var name = getText(bestMatch, "td");
+        var lastPrice = getText(bestMatch, "td")[2];
+        var lookupData = {
+            symbol: symbol,
+            name: name,
+            lastPrice: lastPrice
+        };
+        return lookupData;
+    };
+    Scraper.requestQuoteHTML = function (stockSymbol) {
         return __awaiter(this, void 0, void 0, function () {
             var data, e_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         _a.trys.push([0, 2, , 3]);
-                        logger_1.logger.info("Scraping HTML for stock symbol '" + stockSymbol + "'...");
-                        return [4 /*yield*/, this.client.get("" + this.BASE_URL + stockSymbol)];
+                        logger_1.logger.info("Scraping HTML (quote data) for stock symbol '" + stockSymbol + "'...");
+                        return [4 /*yield*/, this.client.get("" + this.QUOTE_URL + stockSymbol)];
                     case 1:
                         data = (_a.sent()).data;
                         return [2 /*return*/, data];
@@ -169,7 +199,29 @@ var Scraper = /** @class */ (function () {
             });
         });
     };
-    Scraper.BASE_URL = 'https://finance.yahoo.com/quote/';
+    Scraper.requestLookupHTML = function (companyName) {
+        return __awaiter(this, void 0, void 0, function () {
+            var data, e_2;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        logger_1.logger.info("Scraping HTML (lookup data) for company name '" + companyName + "'...");
+                        return [4 /*yield*/, this.client.get("" + this.LOOKUP_URL + companyName)];
+                    case 1:
+                        data = (_a.sent()).data;
+                        return [2 /*return*/, data];
+                    case 2:
+                        e_2 = _a.sent();
+                        logger_1.logger.error(e_2);
+                        throw new Error('Error making GET request!');
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    Scraper.QUOTE_URL = 'https://finance.yahoo.com/quote/';
+    Scraper.LOOKUP_URL = 'https://finance.yahoo.com/lookup?s=';
     Scraper.client = axios_1.default.create();
     return Scraper;
 }());

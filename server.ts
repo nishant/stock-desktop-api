@@ -19,14 +19,24 @@ app.use((req: { method: string; ip: any; url: any; }, res: { header: (arg0: stri
 // Handle POST requests that come in formatted as JSON
 app.use(express.json());
 
-// default route
+// default route (symbol)
 app.get('/', async (req, res) => {
   let stockSymbol = req.query.stockSymbol;
   let stockData;
   if (stockSymbol) {
-    stockData = await Scraper.fetch(stockSymbol.toString());
+    stockData = await Scraper.fetch(stockSymbol.toString(), undefined);
   }
   res.send(stockData);
+});
+
+// lookup route
+app.get('/lookup', async (req, res) => {
+  let companyName = req.query.companyName;
+  let lookupData;
+  if (companyName) {
+    lookupData = await Scraper.fetch(undefined, companyName.toString());
+  }
+  res.send(lookupData);
 });
 
 // start our server on port 4201
